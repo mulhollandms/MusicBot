@@ -2843,6 +2843,18 @@ class MusicBot(discord.Client):
                 self.str.get("cmd-pause-none", "Player is not playing."), expire_in=30
             )
 
+    async def cmd_bansong(self, player):
+        """
+        Usage:
+            {command_prefix}bansong
+        Removes the currently playing song from the autoplaylist
+        """
+        if player.current_entry:
+            await self.remove_from_autoplaylist(
+                        player.current_entry.url, delete_from_ap=self.config.remove_ap
+                    )
+            
+
     async def cmd_resume(self, player):
         """
         Usage:
