@@ -437,12 +437,12 @@ class MusicBot(discord.Client):
     ):
         if song_url not in self.autoplaylist:
             log.debug('URL "{}" not in autoplaylist, ignoring'.format(song_url))
-            return
+            return False
 
         async with self.aiolocks[_func_()]:
             self.autoplaylist.remove(song_url)
             log.info(
-                "Removing unplayable song from session autoplaylist: %s" % song_url
+                "Removing song from session autoplaylist: %s" % song_url
             )
 
             with open(
@@ -464,6 +464,7 @@ class MusicBot(discord.Client):
             if delete_from_ap:
                 log.info("Updating autoplaylist")
                 write_file(self.config.auto_playlist_file, self.autoplaylist)
+            return True
 
     @ensure_appinfo
     async def generate_invite_link(
@@ -2843,16 +2844,26 @@ class MusicBot(discord.Client):
                 self.str.get("cmd-pause-none", "Player is not playing."), expire_in=30
             )
 
-    async def cmd_bansong(self, player):
+    async def cmd_ban(self, player):
         """
         Usage:
-            {command_prefix}bansong
+            {command_prefix}ban
         Removes the currently playing song from the autoplaylist
         """
         if player.current_entry:
-            await self.remove_from_autoplaylist(
-                        player.current_entry.url, delete_from_ap=self.config.remove_ap
-                    )
+            if await self.remove_from_autoplaylist(
+                        player.current_entry.url, ex=Exception("Banned by use of the banned command"), delete_from_ap=self.config.remove_ap
+                    ):
+                return Response(
+                    "Removed currently playing song from autoplaylist",
+                    delete_after=15
+                )
+            else:
+                return Response(
+                    "Could not ban song - song is not in the autoplaylist",
+                    delete_after=15
+                )
+            
             
 
     async def cmd_resume(self, player):
